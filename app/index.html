@@ -66,6 +66,9 @@
 
         <div class="row">
           <input type="text" class="form-control" placeholder="Search here" id="search-bar">
+          <span class="example">
+            e.g. Action Now, Chicago, IL, Linda Evans
+          </span>
           <hr>
         </div>
 
@@ -182,7 +185,7 @@
           timeoutId = setTimeout(function(){
             var searchString = searchBar.val();
             var found = $.grep(organizationData, function(org) {
-              return org.organization.toLowerCase().indexOf(searchString.toLowerCase()) !== -1;
+              return org.organization.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.primarycontact.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.city.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.state.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.mission.toLowerCase().indexOf(searchString.toLowerCase()) !== -1;
             });
             populateOrganizationsInList(found);
             addBubbles(found);
@@ -218,8 +221,8 @@
             },
             fillOpacity: 0.75,
             highlightOnHover: true,
-            highlightFillColor: '#6687DB',
-            highlightBorderColor: 'rgba(250, 15, 160, 0.2)',
+            highlightFillColor: '#CE2C2C',
+            highlightBorderColor: 'rgba(255, 255, 255, 0.2)',
             highlightBorderWidth: 2,
             highlightFillOpacity: 0.85
           });
@@ -248,8 +251,8 @@
             },
             fillOpacity: 0.75,
             highlightOnHover: true,
-            highlightFillColor: '#6687DB',
-            highlightBorderColor: 'rgba(250, 15, 160, 0.2)',
+            highlightFillColor: '#CE2C2C',
+            highlightBorderColor: 'rgba(255, 255, 255, 0.2)',
             highlightBorderWidth: 2,
             highlightFillOpacity: 0.85
           });

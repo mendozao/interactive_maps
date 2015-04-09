@@ -8,13 +8,17 @@ a {
 }
 
 text {
-    color: #FFFFFF;
+    color: #FFFFFF !important;
     font-family: 'Open Sans', sans-serif;
 }
 
 .navbar {
     background-color: #5BB7D5;
     border:0;
+}
+
+.nav > li > a:hover {
+    background-color: #5BB7D5;
 }
 
 .navbar a {
@@ -49,6 +53,10 @@ text {
 .organization-information-container {
     border: 3px solid #F1F1F1;
     padding: 8px;
+}
+
+.example {
+    font-size: 12px;
 }
 
 .map {
