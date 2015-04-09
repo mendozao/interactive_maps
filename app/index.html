@@ -258,7 +258,7 @@
       }
 
       function populateOrganizationsInList(orgs){
-        $.get('/templates/organization-template.html', function(template){
+        $.get('templates/organization-template.html', function(template){
           var allOrgs = "";
 
           if(typeof orgs === 'undefined') {
