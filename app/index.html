@@ -110,16 +110,29 @@
       var organization_map,
         organizationData;
 
-      initMap();
-      setupEventHandlers();
+      //Initialization 
+      (function(){
+        fetchSpreadsheetData();
+        initMap();
+        initSearchBox();
+      })();
+
+      function fetchSpreadsheetData(){
+        var URL = "1Ok1ZAwGVPfNjoQJ3n4H2b5E50e_jbGEx6qjEJf9VlKk"
+        Tabletop.init( { key: URL, callback: didReceiveSpreadsheetData, simpleSheet: false } )
+      }
 
       function initMap(){
-        var URL = "1Ok1ZAwGVPfNjoQJ3n4H2b5E50e_jbGEx6qjEJf9VlKk"
-        Tabletop.init( { key: URL, callback: myData, simpleSheet: false } )
-
         organization_map = new Datamap({
           scope: 'usa',
           element: document.getElementById('organization_map'),
+          done: function(datamap) {
+              datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
+                //Filter only by state based on geography
+                //Update the panel 
+                console.log(geography.id);
+              });
+          },
           geographyConfig: {
             highlightFillColor: '#5BB7D5',
             highlightBorderColor: '#FFFFFF',
@@ -133,24 +146,25 @@
         organization_map.labels();
       }
 
-      function myData(data) {
+      function didReceiveSpreadsheetData(data) {
         organizationData = data.Organizations.elements;
-        addBubbles();
-        populateOrganizationsInList();
 
-        progressPieChartData = [
-          {
+        addBubbles(organizationData);
+        populateOrganizationsInList(organizationData);
+        addPieCharts(data);
+      }
+
+      function addPieCharts(data) {
+        var progressPieChartData = [{
             label: 'Pledged' + '\n' + convertToDollars(data.ProgressPieChart.elements[0].pledged),
             value: data.ProgressPieChart.elements[0].pledged
           },
           {
             label: 'Left to go' + '\n' + convertToDollars(data.ProgressPieChart.elements[0].lefttogo),
             value: data.ProgressPieChart.elements[0].lefttogo
-          }
-        ];
+          }];
 
-        regionalPieChartData = [
-          {
+        var regionalPieChartData = [{
             label: 'Southeast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].southeast),
             value: data.RegionsPieChart.elements[0].southeast
           },
@@ -169,110 +183,82 @@
           {
             label: 'West Coast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].westcoast),
             value: data.RegionsPieChart.elements[0].westcoast
-          }        
-        ];
+          }];
 
         createPieChart(progressPieChartData, '#progress-pie-chart');
         createPieChart(regionalPieChartData, '#regional-pie-chart');
       }
 
-      function setupEventHandlers(){
+      function initSearchBox(){
         var timeoutId,
             searchBar = $('#search-bar');
 
         searchBar.on('keypress', function(){
           clearTimeout(timeoutId);
           timeoutId = setTimeout(function(){
-            var searchString = searchBar.val();
-            var found = $.grep(organizationData, function(org) {
-              return org.organization.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.primarycontact.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.city.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.state.toLowerCase().indexOf(searchString.toLowerCase()) !== -1 || org.mission.toLowerCase().indexOf(searchString.toLowerCase()) !== -1;
-            });
+            var searchString = searchBar.val(),
+              found = filterOrganizations(searchString, 'organization,primarycontact,city,state,mission');
             populateOrganizationsInList(found);
             addBubbles(found);
-          }, 700);
+          }, 500);
+        });
+      }
+
+      function filterOrganizations(searchString, columns){
+        var columns = columns.split(',');
+        return $.grep(organizationData, function(org) {
+
+          //Don't use foreach here - return statement won't cause grep callback to return
+          for(var i = 0; i < columns.length; i = i + 1) {
+            if(org[columns[i]].toLowerCase().indexOf(searchString.toLowerCase()) !== -1){
+              return true;
+            }
+          }
+
+          return false;
         });
       }
 
       function addBubbles(orgs){
         organizationBubbleData = [];
+      
+        orgs.forEach(function(organization){
+          organizationBubbleData.push({
+            name: organization.organization,
+            primarycontact: organization.primarycontact,
+            url: organization.url,
+            mission: organization.mission,
+            radius: 15,
+            yeild: 100,
+            country: 'USA',
+            fillKey: 'redColor',
+            latitude: organization.latitude,
+            longitude: organization.longitude
+          });
+        });
 
-        if(typeof orgs === 'undefined') {
-          organizationData.forEach(function(organization){
-            organizationBubbleData.push({
-              name: organization.organization,
-              primarycontact: organization.primarycontact,
-              url: organization.url,
-              mission: organization.mission,
-              radius: 15,
-              yeild: 100,
-              country: 'USA',
-              fillKey: 'redColor',
-              latitude: organization.latitude,
-              longitude: organization.longitude
-            });
-          });
-
-          organization_map.bubbles(organizationBubbleData, {
-            borderWidth: 1,
-            borderColor: '#FFFFFF',
-            popupOnHover: true,
-            popupTemplate: function(geography, data) {
-              return '<div class="bubble-info">' + '<strong>' + data.name + '</strong>' + '<br>' + data.primarycontact + '<br>' + data.url + '<br>' + data.mission + '</div>';
-            },
-            fillOpacity: 0.75,
-            highlightOnHover: true,
-            highlightFillColor: '#CE2C2C',
-            highlightBorderColor: 'rgba(255, 255, 255, 0.2)',
-            highlightBorderWidth: 2,
-            highlightFillOpacity: 0.85
-          });
-        }else {
-          orgs.forEach(function(organization){
-            organizationBubbleData.push({
-              name: organization.organization,
-              primarycontact: organization.primarycontact,
-              url: organization.url,
-              mission: organization.mission,
-              radius: 15,
-              yeild: 100,
-              country: 'USA',
-              fillKey: 'redColor',
-              latitude: organization.latitude,
-              longitude: organization.longitude
-            });
-          });
-
-          organization_map.bubbles(organizationBubbleData, {
-            borderWidth: 1,
-            borderColor: '#FFFFFF',
-            popupOnHover: true,
-            popupTemplate: function(geography, data) {
-              return '<div class="bubble-info">' + '<strong>' + data.name + '</strong>' + '<br>' + data.primarycontact + '<br>' + data.url + '<br>' + data.mission + '</div>';
-            },
-            fillOpacity: 0.75,
-            highlightOnHover: true,
-            highlightFillColor: '#CE2C2C',
-            highlightBorderColor: 'rgba(255, 255, 255, 0.2)',
-            highlightBorderWidth: 2,
-            highlightFillOpacity: 0.85
-          });
-        }
-        
+        organization_map.bubbles(organizationBubbleData, {
+          borderWidth: 1,
+          borderColor: '#FFFFFF',
+          popupOnHover: true,
+          popupTemplate: function(geography, data) {
+            return '<div class="bubble-info">' + '<strong>' + data.name + '</strong>' + '<br>' + data.primarycontact + '<br>' + data.url + '<br>' + data.mission + '</div>';
+          },
+          fillOpacity: 0.75,
+          highlightOnHover: true,
+          highlightFillColor: '#CE2C2C',
+          highlightBorderColor: 'rgba(255, 255, 255, 0.2)',
+          highlightBorderWidth: 2,
+          highlightFillOpacity: 0.85
+        });
       }
 
       function populateOrganizationsInList(orgs){
         $.get('templates/organization-template.html', function(template){
           var allOrgs = "";
-
-          if(typeof orgs === 'undefined') {
-            organizationData.forEach(function(organization){
-              allOrgs += Mustache.render(template, organization);
-            });
-          }else {
             orgs.forEach(function(organization){
               allOrgs += Mustache.render(template, organization);
             });
-          }
           $('#all-organizations').html(allOrgs);
         });
       }
@@ -291,10 +277,8 @@
 
         var pie = d3.layout.pie().value(function(d){return d.value;});
 
-        // declare an arc generator function
         var arc = d3.svg.arc().outerRadius(r);
 
-        // select paths, use arc generator to draw
         var arcs = vis.selectAll("g.slice")
                       .data(pie)
                       .enter()
@@ -309,7 +293,6 @@
               return arc(d);
             });
 
-        // add the text
         arcs.append("svg:text").attr("transform", function(d){
           d.innerRadius = 0;
           d.outerRadius = r;
