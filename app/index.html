@@ -1,0 +1,329 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+  <link href='//fonts.googleapis.com/css?family=Open+Sans:400,300italic,300,700,800' rel='stylesheet' type='text/css'>
+  <link href='//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
+
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/mustache.js"></script>
+  <script type="text/javascript" src="js/tabletop.js"></script>
+  <script type="text/javascript" src="js/sheetsee.js"></script>
+  <script type="text/javascript" src="js/datamaps.js"></script>
+
+</head>
+<body>
+
+
+  <nav class="navbar navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Project name</a>
+      </div>
+      <div id="navbar" class="collapse navbar-collapse pull-right">
+        <ul class="nav navbar-nav">
+          <li><a href="#"><i class="fa fa-plus"></i> Add your organization</a></li>
+        </ul>
+      </div><!--/.nav-collapse -->
+    </div>
+  </nav>
+
+
+  <div class="container main-content">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>A Partial Map of Black-led Black Liberation Organizing</h1><br>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-8">
+        <p class="sub-paragraph">This is a resource guide compiled by members, former staff, board and advisers, organizers, allies, partners, and funders of Resource Generation. Over X # of people submitted ideas, in alignment with the guidelines, also developed in partnership, of what constitutes Black-led organizing for Black liberation. It is not a comprehensive guide of all Black-Led, Black Liberation Organizing.</p>
+
+        <p class="sub-paragraph">
+          This is a part of Resource Generation's It Stops Today campaign, moving $1,000,000 to Black-Led, Black Liberation Organizing between the day Michael Brown was killed and what would have been his 19th birthday - May 20th, 2015. We aim to support organizing that confronts and dismantles anti-Black violence, whether committed by private citizens or by law enforcement, throughout the US. Resource Generation (RG) is a national membership organization organizing young people with wealth toward the equitable distribution of land, wealth and power. Learn more about RG and learn how to become a member by visiting www.resourcegeneration.org.
+        </p>
+        <div id="organization_map" class="map">
+        </div>
+      </div>
+      <div class="col-md-4">
+
+        <div class="row">
+          <a href="http://resourcegeneration.org/get-involved/become-a-member" target="_blank">Learn more about RG</a><br>
+          <a href="http://resourcegeneration.org/what-we-do/supporting-black-led-black-liberation" target="_blank">Learn more about Black-led Organizing</a>
+          <hr>
+        </div>
+
+        <div class="row">
+          <input type="text" class="form-control" placeholder="Search here" id="search-bar">
+          <hr>
+        </div>
+
+
+        <div class="row organization-information-container" id="all-organizations">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="row pie-charts">
+      <div class="col-md-6">
+        <h2>How far are we?</h2>
+        <div class="pie-chart" id="progress-pie-chart">
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <h2>Where are funds going?</h2>
+        <div class="pie-chart" id="regional-pie-chart">
+        </div>
+      </div>
+    </div>
+
+    <div class="row bottom-information">
+      <div class="col-md-12">
+        <p class="copyright">
+          Copyright 2015. All rights reserved.
+        </p>
+
+        <p class="disclaimer">Disclaimer: The information provided in this list/map is for informational purposes only, and is not an endorsement of any of the groups or projects listed. We encourage you to do your own research, meet with, attend events, and call the people who are listed on the websites to learn more an individual group or the issues they are addressing.</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+
+    (function(){
+      var organization_map,
+        organizationData;
+
+      initMap();
+      setupEventHandlers();
+
+      function initMap(){
+        var URL = "1Ok1ZAwGVPfNjoQJ3n4H2b5E50e_jbGEx6qjEJf9VlKk"
+        Tabletop.init( { key: URL, callback: myData, simpleSheet: false } )
+
+        organization_map = new Datamap({
+          scope: 'usa',
+          element: document.getElementById('organization_map'),
+          geographyConfig: {
+            highlightFillColor: '#5BB7D5',
+            highlightBorderColor: '#FFFFFF',
+            highlightBorderWidth: 2
+          },
+          fills: {
+            redColor: '#FF6868',
+            defaultFill: '#B5ADAF'
+          }
+        });
+        organization_map.labels();
+      }
+
+      function myData(data) {
+        organizationData = data.Organizations.elements;
+        addBubbles();
+        populateOrganizationsInList();
+
+        progressPieChartData = [
+          {
+            label: 'Pledged' + '\n' + convertToDollars(data.ProgressPieChart.elements[0].pledged),
+            value: data.ProgressPieChart.elements[0].pledged
+          },
+          {
+            label: 'Left to go' + '\n' + convertToDollars(data.ProgressPieChart.elements[0].lefttogo),
+            value: data.ProgressPieChart.elements[0].lefttogo
+          }
+        ];
+
+        regionalPieChartData = [
+          {
+            label: 'Southeast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].southeast),
+            value: data.RegionsPieChart.elements[0].southeast
+          },
+          {
+            label: 'Midwest' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].midwest),
+            value: data.RegionsPieChart.elements[0].midwest
+          },
+          {
+            label: 'Northeast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].northeast),
+            value: data.RegionsPieChart.elements[0].northeast
+          },
+          {
+            label: 'Southwest' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].southwest),
+            value: data.RegionsPieChart.elements[0].southwest
+          },
+          {
+            label: 'West Coast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].westcoast),
+            value: data.RegionsPieChart.elements[0].westcoast
+          }        
+        ];
+
+        createPieChart(progressPieChartData, '#progress-pie-chart');
+        createPieChart(regionalPieChartData, '#regional-pie-chart');
+      }
+
+      function setupEventHandlers(){
+        var timeoutId,
+            searchBar = $('#search-bar');
+
+        searchBar.on('keypress', function(){
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(function(){
+            var searchString = searchBar.val();
+            var found = $.grep(organizationData, function(org) {
+              return org.organization.toLowerCase().indexOf(searchString.toLowerCase()) !== -1;
+            });
+            populateOrganizationsInList(found);
+            addBubbles(found);
+          }, 700);
+        });
+      }
+
+      function addBubbles(orgs){
+        organizationBubbleData = [];
+
+        if(typeof orgs === 'undefined') {
+          organizationData.forEach(function(organization){
+            organizationBubbleData.push({
+              name: organization.organization,
+              primarycontact: organization.primarycontact,
+              url: organization.url,
+              mission: organization.mission,
+              radius: 15,
+              yeild: 100,
+              country: 'USA',
+              fillKey: 'redColor',
+              latitude: organization.latitude,
+              longitude: organization.longitude
+            });
+          });
+
+          organization_map.bubbles(organizationBubbleData, {
+            borderWidth: 1,
+            borderColor: '#FFFFFF',
+            popupOnHover: true,
+            popupTemplate: function(geography, data) {
+              return '<div class="bubble-info">' + '<strong>' + data.name + '</strong>' + '<br>' + data.primarycontact + '<br>' + data.url + '<br>' + data.mission + '</div>';
+            },
+            fillOpacity: 0.75,
+            highlightOnHover: true,
+            highlightFillColor: '#6687DB',
+            highlightBorderColor: 'rgba(250, 15, 160, 0.2)',
+            highlightBorderWidth: 2,
+            highlightFillOpacity: 0.85
+          });
+        }else {
+          orgs.forEach(function(organization){
+            organizationBubbleData.push({
+              name: organization.organization,
+              primarycontact: organization.primarycontact,
+              url: organization.url,
+              mission: organization.mission,
+              radius: 15,
+              yeild: 100,
+              country: 'USA',
+              fillKey: 'redColor',
+              latitude: organization.latitude,
+              longitude: organization.longitude
+            });
+          });
+
+          organization_map.bubbles(organizationBubbleData, {
+            borderWidth: 1,
+            borderColor: '#FFFFFF',
+            popupOnHover: true,
+            popupTemplate: function(geography, data) {
+              return '<div class="bubble-info">' + '<strong>' + data.name + '</strong>' + '<br>' + data.primarycontact + '<br>' + data.url + '<br>' + data.mission + '</div>';
+            },
+            fillOpacity: 0.75,
+            highlightOnHover: true,
+            highlightFillColor: '#6687DB',
+            highlightBorderColor: 'rgba(250, 15, 160, 0.2)',
+            highlightBorderWidth: 2,
+            highlightFillOpacity: 0.85
+          });
+        }
+        
+      }
+
+      function populateOrganizationsInList(orgs){
+        $.get('/templates/organization-template.html', function(template){
+          var allOrgs = "";
+
+          if(typeof orgs === 'undefined') {
+            organizationData.forEach(function(organization){
+              allOrgs += Mustache.render(template, organization);
+            });
+          }else {
+            orgs.forEach(function(organization){
+              allOrgs += Mustache.render(template, organization);
+            });
+          }
+          $('#all-organizations').html(allOrgs);
+        });
+      }
+
+      function createPieChart(data, selector){
+        var w = 400,
+            h = 400,
+            r = h/2;
+        var colors = ['#5bb7d5', '#FF6868', '#24A8B7', '#527E88', '#374C4C'];
+        var vis = d3.select(selector)
+                    .append("svg:svg").data([data])
+                    .attr("width", w)
+                    .attr("height", h)
+                    .append("svg:g")
+                    .attr("transform", "translate(" + r + "," + r + ")");
+
+        var pie = d3.layout.pie().value(function(d){return d.value;});
+
+        // declare an arc generator function
+        var arc = d3.svg.arc().outerRadius(r);
+
+        // select paths, use arc generator to draw
+        var arcs = vis.selectAll("g.slice")
+                      .data(pie)
+                      .enter()
+                      .append("svg:g")
+                      .attr("class", "slice");
+
+        arcs.append("svg:path")
+            .attr("fill", function(d, i){
+              return colors[i];
+            })
+            .attr("d", function (d) {
+              return arc(d);
+            });
+
+        // add the text
+        arcs.append("svg:text").attr("transform", function(d){
+          d.innerRadius = 0;
+          d.outerRadius = r;
+          return "translate(" + arc.centroid(d) + ")";}).attr("text-anchor", "middle").text( function(d, i){
+            return data[i].label;}
+          );
+        }
+
+        function convertToDollars(num){
+          num = parseInt(num, 10);
+          var p = num.toFixed(2).split(".");
+          return "$" + p[0].split("").reverse().reduce(function(acc, num, i, orig) {
+              return  num + (i && !(i % 3) ? "," : "") + acc;
+          }, "");
+        }
+    })();
+
+  </script>
+</body>
+</html>

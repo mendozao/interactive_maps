@@ -1,0 +1,99 @@
+body {
+    font-family: 'Open Sans', sans-serif;
+    color: #686868;
+}
+
+a {
+    color: #5BB7D5;
+}
+
+text {
+    color: #FFFFFF;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.navbar {
+    background-color: #5BB7D5;
+    border:0;
+}
+
+.navbar a {
+    color: #FFFFFF;
+}
+
+.main-content {
+    padding-top: 80px;
+}
+
+.main-content h1 {
+    text-align: center;
+}
+
+.sub-paragraph {
+    font-size: 12px;
+}
+
+.copyright {
+    text-align: center;
+}
+
+.disclaimer {
+    font-style: italic;
+    font-size: 12px;
+}
+
+.bottom-information {
+    margin: 200px 0 0 0;
+}
+
+.organization-information-container {
+    border: 3px solid #F1F1F1;
+    padding: 8px;
+}
+
+.map {
+    width: 100%;
+    height: 550px;
+}
+
+.bubble-info {
+    background: #FFFFFF;
+    border:1px solid #A2A2A2;
+    padding: 4px;
+    font-size: 12px;
+    color: #686868;
+}
+
+.pie-charts h2 {
+    text-align: center;
+    font-size: 18px;
+}
+
+.pie-chart {
+    text-align: center;
+    margin: 45px 0 0 0;
+}
+
+.organization-information-container {
+    overflow: scroll;
+    max-height: 480px;
+}
+
+.organization-information-block {
+    padding: 3px;
+}
+
+.label-block {
+    margin: 0;
+    padding: 0;
+}
+
+.label-title {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.label-content {
+    float: right;
+    font-size: 13px;
+}
