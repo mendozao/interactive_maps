@@ -14,7 +14,7 @@
   </div>
 
   <div class="label-block">
-    <span class="label-title">Url</span>
+    <span class="label-title">Website</span>
     <div class="label-content">
       <a href="{{url}}" target="_blank">{{url}}</a>
     </div>
@@ -49,6 +49,13 @@
   </div>
 
   <div class="label-block">
+    <span class="label-title">Tags</span>
+    <div class="label-content">
+      {{#displayTags}}<span class="tag">{{.}}</span>{{/displayTags}}   
+    </div>
+  </div>
+
+  <div class="label-block">
     <span class="label-title">Structure</span>
     <div class="label-content">
       {{structure}}
@@ -63,4 +70,4 @@
   </div>
 </div>
 
-<hr>
+<hr class="org-hr">

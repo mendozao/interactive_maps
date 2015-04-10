@@ -10,6 +10,7 @@
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/jquery.canvasjs.min.js"></script>
   <script type="text/javascript" src="js/mustache.js"></script>
   <script type="text/javascript" src="js/tabletop.js"></script>
   <script type="text/javascript" src="js/sheetsee.js"></script>
@@ -48,7 +49,7 @@
 
     <div class="row">
       <div class="col-md-8">
-        <p class="sub-paragraph">This is a resource guide compiled by members, former staff, board and advisers, organizers, allies, partners, and funders of Resource Generation. Over X # of people submitted ideas, in alignment with the guidelines, also developed in partnership, of what constitutes Black-led organizing for Black liberation. It is not a comprehensive guide of all Black-Led, Black Liberation Organizing.</p>
+        <p class="sub-paragraph">This is a resource guide compiled by members, former staff, board and advisers, organizers, allies, partners, and funders of Resource Generation. Over 30 people submitted ideas, in alignment with the guidelines, also developed in partnership, of what constitutes Black-led organizing for Black liberation. It is not a comprehensive guide of all Black-Led, Black Liberation Organizing.</p>
 
         <p class="sub-paragraph">
           This is a part of Resource Generation's It Stops Today campaign, moving $1,000,000 to Black-Led, Black Liberation Organizing between the day Michael Brown was killed and what would have been his 19th birthday - May 20th, 2015. We aim to support organizing that confronts and dismantles anti-Black violence, whether committed by private citizens or by law enforcement, throughout the US. Resource Generation (RG) is a national membership organization organizing young people with wealth toward the equitable distribution of land, wealth and power. Learn more about RG and learn how to become a member by visiting www.resourcegeneration.org.
@@ -74,7 +75,14 @@
         </div>
 
 
-        <div class="row organization-information-container" id="all-organizations">
+        <div class="row">
+          <div class="organization-header">
+            <span id="organization-title">Organizations (<a href="" target="_blank">View all in Spreadsheet</a>) </span>
+        
+            <span id="organization-count"></span>
+          </div>
+          <div class="organization-information-container" id="all-organizations">
+          </div>
         </div>
 
       </div>
@@ -116,6 +124,7 @@
         fetchSpreadsheetData();
         initMap();
         initSearchBox();
+        setTagClickHandler();
       })();
 
       function fetchSpreadsheetData(){
@@ -129,9 +138,9 @@
           element: document.getElementById('organization_map'),
           done: function(datamap) {
               datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
-                //Filter only by state based on geography
-                //Update the panel 
-                console.log(geography.id);
+                var found = filterOrganizations(geography.id, 'state');
+                populateOrganizationsInList(found);
+                addBubbles(found);
               });
           },
           geographyConfig: {
@@ -157,37 +166,53 @@
 
       function addPieCharts(data) {
         var progressPieChartData = [{
-            label: 'Pledged' + '\n' + convertToDollars(data.ProgressPieChart.elements[0].pledged),
-            value: data.ProgressPieChart.elements[0].pledged
+            legendText: 'Pledged',
+            label: 'Pledged',
+            y: data.ProgressPieChart.elements[0].pledged
           },
           {
-            label: 'Left to go' + '\n' + convertToDollars(data.ProgressPieChart.elements[0].lefttogo),
-            value: data.ProgressPieChart.elements[0].lefttogo
+            legendText: 'Left to go',
+            label: 'Left to go',
+            y: data.ProgressPieChart.elements[0].lefttogo
           }];
 
         var regionalPieChartData = [{
-            label: 'Southeast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].southeast),
-            value: data.RegionsPieChart.elements[0].southeast
+            legendText: 'Southeast',
+            label: 'Southeast',
+            y: data.RegionsPieChart.elements[0].southeast
           },
           {
-            label: 'Midwest' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].midwest),
-            value: data.RegionsPieChart.elements[0].midwest
+            legendText: 'Midwest',
+            label: 'Midwest',
+            y: data.RegionsPieChart.elements[0].midwest
           },
           {
-            label: 'Northeast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].northeast),
-            value: data.RegionsPieChart.elements[0].northeast
+            legendText: 'Northeast',
+            label: 'Northeast',
+            y: data.RegionsPieChart.elements[0].northeast
           },
           {
-            label: 'Southwest' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].southwest),
-            value: data.RegionsPieChart.elements[0].southwest
+            legendText: 'Southwest',
+            label: 'Southwest',
+            y: data.RegionsPieChart.elements[0].southwest
           },
           {
-            label: 'West Coast' + '\n' + convertToDollars(data.RegionsPieChart.elements[0].westcoast),
-            value: data.RegionsPieChart.elements[0].westcoast
+            legendText: 'West Coast',
+            label: 'West Coast',
+            y: data.RegionsPieChart.elements[0].westcoast
           }];
 
-        createPieChart(progressPieChartData, '#progress-pie-chart');
-        createPieChart(regionalPieChartData, '#regional-pie-chart');
+        createPieChart(progressPieChartData, 'progress-pie-chart');
+        createPieChart(regionalPieChartData, 'regional-pie-chart');
+      }
+
+      function setTagClickHandler(){
+        $(document).on('click','span.tag', function(){
+          var tagName = $(this).html();
+          found = filterOrganizations(tagName,'tags');
+          populateOrganizationsInList(found);
+          addBubbles(found);
+        });
       }
 
       function initSearchBox(){
@@ -206,18 +231,25 @@
       }
 
       function filterOrganizations(searchString, columns){
-        var columns = columns.split(',');
-        return $.grep(organizationData, function(org) {
+        //Searching only a single column
+        if(columns.indexOf(',') === -1) {
+          return $.grep(organizationData, function(org) {
+            return org[columns].toLowerCase().indexOf(searchString.toLowerCase()) !== -1;
+          });
+        }else {
+          var columns = columns.split(',');
+          return $.grep(organizationData, function(org) {
 
-          //Don't use foreach here - return statement won't cause grep callback to return
-          for(var i = 0; i < columns.length; i = i + 1) {
-            if(org[columns[i]].toLowerCase().indexOf(searchString.toLowerCase()) !== -1){
-              return true;
+            //Don't use foreach here - return statement won't cause grep callback to return
+            for(var i = 0; i < columns.length; i = i + 1) {
+              if(org[columns[i]].toLowerCase().indexOf(searchString.toLowerCase()) !== -1){
+                return true;
+              }
             }
-          }
 
-          return false;
-        });
+            return false;
+          });
+        }
       }
 
       function addBubbles(orgs){
@@ -257,58 +289,56 @@
       function populateOrganizationsInList(orgs){
         $.get('templates/organization-template.html', function(template){
           var allOrgs = "";
+
+          if(orgs.length === 0) {
+            allOrgs = '<div class="no-results">0 Results</div>';
+          }else {
             orgs.forEach(function(organization){
+              organization.displayTags = organization.tags.split(',');
               allOrgs += Mustache.render(template, organization);
             });
+          }
           $('#all-organizations').html(allOrgs);
+          $('#organization-count').html(orgs.length + ' Results');
         });
       }
 
       function createPieChart(data, selector){
-        var w = 400,
-            h = 400,
-            r = h/2;
-        var colors = ['#5bb7d5', '#FF6868', '#24A8B7', '#527E88', '#374C4C'];
-        var vis = d3.select(selector)
-                    .append("svg:svg").data([data])
-                    .attr("width", w)
-                    .attr("height", h)
-                    .append("svg:g")
-                    .attr("transform", "translate(" + r + "," + r + ")");
+        var chart = new CanvasJS.Chart(selector,
+        {
+          animationEnabled: true,
+          legend:{
+            verticalAlign: "bottom",
+            horizontalAlign: "center",
+            fontSize: 12,
+            fontFamily: "Open Sans",
+            fontColor: '#686868'        
+          },
+          toolTip:{
+            enabled: false, //enable here
+          },
+          theme: "theme1",
+          data: [{        
+            type: "pie",       
+            indexLabelFontFamily: "Open Sans",       
+            indexLabelFontSize: 11,
+            indexLabelFontWeight: "normal",
+            indexLabel: "{label} ${y}",
+            startAngle:-20,      
+            showInLegend: true,
+            dataPoints: data
+          }]
+        });
+        chart.render();
+      }
 
-        var pie = d3.layout.pie().value(function(d){return d.value;});
-
-        var arc = d3.svg.arc().outerRadius(r);
-
-        var arcs = vis.selectAll("g.slice")
-                      .data(pie)
-                      .enter()
-                      .append("svg:g")
-                      .attr("class", "slice");
-
-        arcs.append("svg:path")
-            .attr("fill", function(d, i){
-              return colors[i];
-            })
-            .attr("d", function (d) {
-              return arc(d);
-            });
-
-        arcs.append("svg:text").attr("transform", function(d){
-          d.innerRadius = 0;
-          d.outerRadius = r;
-          return "translate(" + arc.centroid(d) + ")";}).attr("text-anchor", "middle").text( function(d, i){
-            return data[i].label;}
-          );
-        }
-
-        function convertToDollars(num){
-          num = parseInt(num, 10);
-          var p = num.toFixed(2).split(".");
-          return "$" + p[0].split("").reverse().reduce(function(acc, num, i, orig) {
-              return  num + (i && !(i % 3) ? "," : "") + acc;
-          }, "");
-        }
+      function convertToDollars(num){
+        num = parseInt(num, 10);
+        var p = num.toFixed(2).split(".");
+        return "$" + p[0].split("").reverse().reduce(function(acc, num, i, orig) {
+            return  num + (i && !(i % 3) ? "," : "") + acc;
+        }, "");
+      }
     })();
 
   </script>
