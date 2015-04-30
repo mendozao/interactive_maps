@@ -136,3 +136,7 @@ text {
 .label-content {
     font-size: 13px;
 }
+
+g {
+    transition: 1s ease-in-out;
+}
