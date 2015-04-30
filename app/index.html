@@ -153,7 +153,6 @@
                   .on("zoom", redraw));
 
                function redraw() {
-                console.log(d3.event)
                     datamap.svg.selectAll("g").transition().duration(750).attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
                   }
                 
@@ -162,7 +161,7 @@
           geographyConfig: {
             highlightFillColor: '#5BB7D5',
             highlightBorderColor: '#FFFFFF',
-            highlightBorderWidth: 2, 
+            highlightBorderWidth: 2
           },
           fills: {
             redColor: '#FF6868',
@@ -171,8 +170,6 @@
         });
         organization_map.labels();
       }
-
-      console.log('org map', organization_map)
 
 
 
@@ -286,7 +283,7 @@
             primarycontact: organization.primarycontact,
             url: organization.url,
             mission: organization.mission,
-            radius: 5,
+            radius: 7,
             yeild: 100,
             country: 'USA',
             fillKey: 'redColor',
