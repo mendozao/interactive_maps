@@ -136,27 +136,27 @@
         var URL = "1Ok1ZAwGVPfNjoQJ3n4H2b5E50e_jbGEx6qjEJf9VlKk"
         Tabletop.init( { key: URL, callback: didReceiveSpreadsheetData, simpleSheet: false } )
       }
-      var path, projection;
+     
       function initMap(){
-       
+        
         organization_map = new Datamap({
           scope: 'usa',
           element: document.getElementById('organization_map'),
           done: function(datamap) {
               datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
+          
+                var found = filterOrganizations(geography.id, 'state');
+                populateOrganizationsInList(found);
+                addBubbles(found);
                
                 datamap.svg.call(d3.behavior.zoom() 
                   .on("zoom", redraw));
 
                function redraw() {
-                    datamap.svg.selectAll("g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-               }
-                console.log('geo', geography)
-                console.log('datamap',datamap)
-                setProjectionToState(geography, datamap)
-                var found = filterOrganizations(geography.id, 'state');
-                populateOrganizationsInList(found);
-                addBubbles(found);
+                console.log(d3.event)
+                    datamap.svg.selectAll("g").transition().duration(750).attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                  }
+                
               });
           },
           geographyConfig: {
@@ -167,38 +167,14 @@
           fills: {
             redColor: '#FF6868',
             defaultFill: '#B5ADAF'
-          },
-          setProjection: function(element, options) {
-            var projection, path;
-            projection = d3.geo.albersUsa()
-                .scale(element.offsetWidth)
-                .translate([element.offsetWidth / 2, element.offsetHeight / 2]);
-
-            path = d3.geo.path()
-                .projection( projection );
-
-            return {path: path, projection: projection};
-        }
+          }
         });
         organization_map.labels();
       }
 
-
-
       console.log('org map', organization_map)
 
-      function setProjectionToState(geography,datamap){
-        console.log('setProjectiongeo', geography)
-        console.log('org map', organization_map, geography.geometry.coordinates)
-        // console.log(path())
-        
 
-        // datamap.projection(geography)
-        console.log(datamap.path())
-        // var $subUnit = $(path,'.datamaps-subunit.'+geography.id);
-        // console.log($subUnit)
-
-      }
 
       function didReceiveSpreadsheetData(data) {
         organizationData = data.Organizations.elements;
@@ -310,7 +286,7 @@
             primarycontact: organization.primarycontact,
             url: organization.url,
             mission: organization.mission,
-            radius: 10,
+            radius: 5,
             yeild: 100,
             country: 'USA',
             fillKey: 'redColor',
